@@ -30,7 +30,7 @@ Produs initializareProdus()
 	return produs;
 }
 
-Produs creareProdus(int cod, float pret, const char* denumire)
+Produs creareProdus(const int cod, const float pret, const char* denumire)
 {
 	Produs produs;
 
@@ -112,31 +112,34 @@ Vector creareVector(const int dimensiune, Produs* elemente)
 	return v;
 }
 
-void dezalocareVector(Vector v)
-{
-	if (v.elemente != NULL)
-	{
-		for (int i = 0; i < v.dimensiune; i++)
-		{
-			dezalocareProdus(v.elemente[i]);
-		}
-
-		free(v.elemente);
-		v.elemente = NULL;
-	}
-
-	v.dimensiune = 0;
-}
-
 bool vectorIsEmpty(const Vector v)
 {
-	return v.elemente == NULL || v.dimensiune <= 0;
+	return v.elemente == NULL && v.dimensiune <= 0;
+}
+
+void dezalocareVector(Vector* v)
+{
+	if (vectorIsEmpty(*v))
+	{
+		return;
+	}
+
+	for (int i = 0; i < v->dimensiune; i++)
+	{
+		dezalocareProdus(v->elemente[i]);
+	}
+
+	free(v->elemente);
+
+	v->dimensiune = 0;
+	v->elemente = NULL;
 }
 
 void afisareVector(const Vector v)
 {
 	if (vectorIsEmpty(v))
 	{
+		printf("Vectorul este gol nu avem ce afisa!\n\n");
 		return;
 	}
 
@@ -155,17 +158,17 @@ void afisareVector(const Vector v)
 
 Vector pushFront(Vector v, const Produs produs)
 {
-	if (v.elemente == NULL)
+	if (vectorIsEmpty(v))
 	{
 		v.elemente = (Produs*)malloc(sizeof(Produs));
 		v.elemente[0] = copiazaProdus(produs);
-		v.dimensiune++;
+		v.dimensiune = 1;
 
 		return v;
 	}
 
-	int dimensiune = v.dimensiune;
 	Produs* aux = v.elemente;
+	int dimensiune = v.dimensiune;
 
 	v.elemente = (Produs*)malloc((dimensiune + 1) * sizeof(Produs));
 	v.elemente[0] = copiazaProdus(produs);
@@ -176,6 +179,104 @@ Vector pushFront(Vector v, const Produs produs)
 	}
 
 	v.dimensiune++;
+	free(aux);
+
+	return v;
+}
+
+Vector pushBack(Vector v, const Produs produs)
+{
+	if (vectorIsEmpty(v))
+	{
+		v.elemente = (Produs*)malloc(sizeof(Produs));
+		v.elemente[0] = copiazaProdus(produs);
+		v.dimensiune = 1;
+
+		return v;
+	}
+
+	Produs* aux = v.elemente;
+	int dimensiune = v.dimensiune;
+
+	v.elemente = (Produs*)malloc((dimensiune + 1) * sizeof(Produs));
+	v.elemente[dimensiune] = copiazaProdus(produs);
+
+	for (int i = 0; i < dimensiune; i++)
+	{
+		v.elemente[i] = aux[i];
+	}
+
+	v.dimensiune++;
+	free(aux);
+
+	return v;
+}
+
+Vector popFront(Vector v)
+{
+	if (vectorIsEmpty(v))
+	{
+		return v;
+	}
+
+	if (v.elemente != NULL && v.dimensiune == 1)
+	{
+		dezalocareProdus(v.elemente[0]);
+		free(v.elemente);
+
+		v.dimensiune = 0;
+		v.elemente = NULL;
+
+		return v;
+	}
+
+	Produs* aux = v.elemente;
+	int dimensiune = v.dimensiune;
+
+	v.elemente = (Produs*)malloc((dimensiune - 1) * sizeof(Produs));
+
+	for (int i = 1; i < dimensiune; i++)
+	{
+		v.elemente[i - 1] = aux[i];
+	}
+
+	v.dimensiune--;
+	dezalocareProdus(aux[0]);
+	free(aux);
+
+	return v;
+}
+
+Vector popBack(Vector v)
+{
+	if (vectorIsEmpty(v))
+	{
+		return v;
+	}
+
+	if (v.elemente != NULL && v.dimensiune == 1)
+	{
+		dezalocareProdus(v.elemente[0]);
+		free(v.elemente);
+
+		v.dimensiune = 0;
+		v.elemente = NULL;
+
+		return v;
+	}
+
+	Produs* aux = v.elemente;
+	int dimensiune = v.dimensiune;
+
+	v.elemente = (Produs*)malloc((dimensiune - 1) * sizeof(Produs));
+
+	for (int i = 0; i < dimensiune - 1; i++)
+	{
+		v.elemente[i] = aux[i];
+	}
+
+	v.dimensiune--;
+	dezalocareProdus(aux[dimensiune - 1]);
 	free(aux);
 
 	return v;
@@ -197,13 +298,31 @@ int main()
 
 	printf("=========================================== Dupa inserarea la inceput ===========================================\n\n");
 
-	Produs p = creareProdus(5, 5.5f, "Costita");
+	Produs p1 = creareProdus(5, 5.5f, "Costita");
 
-	v = pushFront(v, p);
+	v = pushFront(v, p1);
 	afisareVector(v);
 
-	dezalocareProdus(p);
-	dezalocareVector(v);
+	printf("=========================================== Dupa inserarea la sfarsit ===========================================\n\n");
+
+	Produs p2 = creareProdus(6, 13.5f, "Hrean");
+
+	v = pushBack(v, p2);
+	afisareVector(v);
+
+	printf("=========================================== Dupa eliminarea la inceput ===========================================\n\n");
+
+	v = popFront(v);
+	afisareVector(v);
+
+	printf("=========================================== Dupa eliminarea la sfarsit ===========================================\n\n");
+
+	v = popBack(v);
+	afisareVector(v);
+
+	dezalocareProdus(p1);
+	dezalocareProdus(p2);
+	dezalocareVector(&v);
 
 	return 0;
 }
