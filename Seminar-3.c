@@ -58,6 +58,22 @@ Produs creareProdus(const int cod, const float pret, const char* denumire)
 	return produs;
 }
 
+Produs citireProdusDinFisier(FILE* f)
+{
+	Produs produs = initializareProdus();
+
+	fscanf(f, "%d", &produs.cod);
+	fscanf(f, "%f", &produs.pret);
+
+	char buffer[100];
+
+	fscanf(f, "%s", buffer);
+	produs.denumire = (char*)malloc((1 + strlen(buffer) * sizeof(char)));
+	strcpy(produs.denumire, buffer);
+
+	return produs;
+}
+
 Produs copiazaProdus(const Produs produs)
 {
 	Produs copie;
@@ -155,9 +171,16 @@ void afisareListaSimpla(const ListaSimpla lista)
 
 	while (aux != NULL)
 	{
-		afisareProdus(aux->info);
+		afisareNodSimplu(aux);
 		aux = aux->next;
 	}
+
+	// echivalent dar cu bucla for
+
+	/*for (NodSimplu* aux = lista.first; aux != NULL; aux = aux->next)
+	{
+		afisareNodSimplu(aux);
+	}*/
 }
 
 void dezalocareListaSimpla(ListaSimpla* lista)
@@ -176,6 +199,31 @@ void dezalocareListaSimpla(ListaSimpla* lista)
 	}
 
 	lista->last = NULL;
+}
+
+ListaSimpla inserareNodLaInceput(ListaSimpla lista, const Produs info)
+{
+	NodSimplu* noulNod = creareNodSimplu(info, NULL);
+
+	if (noulNod == NULL)
+	{
+		return lista;
+	}
+
+	if (isEmptyList(lista))
+	{
+		lista.first = noulNod;
+		lista.last = noulNod;
+		lista.nrNoduri = 1;
+
+		return lista;
+	}
+
+	noulNod->next = lista.first;
+	lista.first = noulNod;
+	lista.nrNoduri++;
+
+	return lista;
 }
 
 ListaSimpla inserareNodLaFinal(ListaSimpla lista, const Produs info)
@@ -198,6 +246,67 @@ ListaSimpla inserareNodLaFinal(ListaSimpla lista, const Produs info)
 
 	lista.last->next = noulNod;
 	lista.last = noulNod;
+	lista.nrNoduri++;
+
+	return lista;
+}
+
+ListaSimpla inserareNodDupaFirst(ListaSimpla lista, const Produs info)
+{
+	if (isEmptyList(lista))
+	{
+		lista = inserareNodLaInceput(lista, info);
+		return lista;
+	}
+
+	if (lista.first == lista.last)
+	{
+		lista = inserareNodLaFinal(lista, info);
+		return lista;
+	}
+
+	NodSimplu* noulNod = creareNodSimplu(info, lista.first->next);
+
+	if (noulNod == NULL)
+	{
+		return lista;
+	}
+
+	lista.first->next = noulNod;
+	lista.nrNoduri++;
+
+	return lista;
+}
+
+ListaSimpla inserareNodInainteDeLast(ListaSimpla lista, const Produs info)
+{
+	if (isEmptyList(lista))
+	{
+		lista = inserareNodLaInceput(lista, info);
+		return lista;
+	}
+
+	if (lista.first == lista.last)
+	{
+		lista = inserareNodLaFinal(lista, info);
+		return lista;
+	}
+
+	NodSimplu* noulNod = creareNodSimplu(info, lista.last);
+
+	if (noulNod == NULL)
+	{
+		return lista;
+	}
+
+	NodSimplu* aux = lista.first;
+
+	while (aux->next != lista.last)
+	{
+		aux = aux->next;
+	}
+
+	aux->next = noulNod;
 	lista.nrNoduri++;
 
 	return lista;
@@ -228,24 +337,152 @@ ListaSimpla stergereNodLaInceput(ListaSimpla lista)
 	return lista;
 }
 
-/*
-* sa se scrie o functie care insereaza un nod inainte de first
-* sa se scrie o functie care insereaza un nod dupa first
-* sa se scrie o functie care insereaza un nod inainte de last
-* sa se scrie o functie care sterge ultimul nod (last)
-* sa se scrie o functie care sterge nodul de dinainte de last
-*/
+ListaSimpla stergereNodLaFinal(ListaSimpla lista)
+{
+	if (isEmptyList(lista))
+	{
+		return lista;
+	}
+
+	if (lista.first == lista.last)
+	{
+		dezalocareNodSimplu(lista.first);
+		lista.first = NULL;
+		lista.last = NULL;
+		lista.nrNoduri = 0;
+
+		return lista;
+	}
+
+	NodSimplu* aux = lista.first;
+
+	while (aux->next != lista.last)
+	{
+		aux = aux->next;
+	}
+
+	NodSimplu* nodDeSters = lista.last;
+	aux->next = NULL;
+	lista.last = aux;
+	dezalocareNodSimplu(nodDeSters);
+	lista.nrNoduri--;
+
+	return lista;
+}
+
+ListaSimpla stergereNodInainteDeLast(ListaSimpla lista)
+{
+	if (isEmptyList(lista))
+	{
+		return lista;
+	}
+
+	if (lista.first == lista.last)
+	{
+		dezalocareNodSimplu(lista.first);
+		lista.first = NULL;
+		lista.last = NULL;
+		lista.nrNoduri = 0;
+
+		return lista;
+	}
+
+	if (lista.first->next == lista.last) // mai avem fix 2 noduri in lista
+	{
+		lista = stergereNodLaInceput(lista);
+		return lista;
+	}
+
+	NodSimplu* aux = lista.first;
+
+	while (aux->next->next != lista.last)
+	{
+		aux = aux->next;
+	}
+
+	NodSimplu* nodDeSters = aux->next;
+	aux->next = lista.last;
+	dezalocareNodSimplu(nodDeSters);
+	lista.nrNoduri--;
+
+	return lista;
+}
+
+ListaSimpla inserareNodOriunde(ListaSimpla lista, const Produs info, const int index)
+{
+	if (index < 0 || index > lista.nrNoduri) // index invalid (nu putem insera in lista)
+	{
+		return lista;
+	}
+
+	if (index == 0) // inserare inainte de first
+	{
+		lista = inserareNodLaInceput(lista, info);
+		return lista;
+	}
+
+	if (index == lista.nrNoduri) // inserare dupa last
+	{
+		lista = inserareNodLaFinal(lista, info);
+		return lista;
+	}
+
+	NodSimplu* aux = lista.first;
+
+	for (int i = 0; i < index - 1; i++)
+	{
+		aux = aux->next;
+	}
+
+	NodSimplu* noulNod = creareNodSimplu(info, aux->next);
+
+	if (noulNod == NULL)
+	{
+		return lista;
+	}
+
+	aux->next = noulNod;
+	lista.nrNoduri++;
+
+	return lista;
+}
+
+ListaSimpla citireListaDinFisier(const char* fisier)
+{
+	ListaSimpla lista = initializareListaSimpla();
+
+	FILE* f = fopen(fisier, "r");
+
+	int nrProduse = 0;
+	fscanf(f, "%d", &nrProduse);
+
+	for (int i = 0; i < nrProduse; i++)
+	{
+		Produs p = citireProdusDinFisier(f);
+		lista = inserareNodLaFinal(lista, p);
+		dezalocareProdus(p);
+	}
+
+	fclose(f);
+
+	return lista;
+}
 
 int main()
 {
-	ListaSimpla lista = initializareListaSimpla();
+	ListaSimpla lista = citireListaDinFisier("produse.txt");
+
+	printf("======================================= Dupa citirea listei din fisier =======================================\n\n");
+	afisareListaSimpla(lista);
 
 	Produs p1 = creareProdus(12, 55.5f, "Mouse");
 	Produs p2 = creareProdus(8, 5.5f, "Ciocolata");
 	Produs p3 = creareProdus(5, 25.0f, "Bere");
 	Produs p4 = creareProdus(19, 10.0f, "Salam");
-
-	afisareListaSimpla(lista);
+	Produs p5 = creareProdus(1, 2.5f, "Paine");
+	Produs p6 = creareProdus(11, 89.99f, "Camera Web");
+	Produs p7 = creareProdus(20, 7.5f, "Lapte");
+	Produs p8 = creareProdus(22, 6.5f, "Pateu");
 
 	printf("======================================= Dupa inserarea la final =======================================\n\n");
 
@@ -256,20 +493,50 @@ int main()
 
 	afisareListaSimpla(lista);
 
+	printf("======================================= Dupa inserarea la inceput =======================================\n\n");
+
+	lista = inserareNodLaInceput(lista, p6);
+	afisareListaSimpla(lista);
+
+	printf("======================================= Inserarea unui nod dupa first =======================================\n\n");
+
+	lista = inserareNodDupaFirst(lista, p7);
+	afisareListaSimpla(lista);
+
+	printf("======================================= Inserarea unui nod inainte de last =======================================\n\n");
+
+	lista = inserareNodInainteDeLast(lista, p8);
+	afisareListaSimpla(lista);
+
+	printf("======================================= Dupa inserarea oriunde =======================================\n\n");
+
+	lista = inserareNodOriunde(lista, p5, 3);
+	afisareListaSimpla(lista);
+
 	printf("======================================= Dupa stergerea la inceput =======================================\n\n");
 
 	lista = stergereNodLaInceput(lista);
-	lista = stergereNodLaInceput(lista);
-	lista = stergereNodLaInceput(lista);
-	lista = stergereNodLaInceput(lista);
-
 	afisareListaSimpla(lista);
+
+	printf("======================================= Dupa stergerea la final =======================================\n\n");
+
+	lista = stergereNodLaFinal(lista);
+	afisareListaSimpla(lista);
+
+	printf("======================================= Dupa stergerea inainte de last =======================================\n\n");
+
+	lista = stergereNodInainteDeLast(lista);
+	afisareListaSimpla(lista);
+
 	dezalocareListaSimpla(&lista);
 
 	dezalocareProdus(p1);
 	dezalocareProdus(p2);
 	dezalocareProdus(p3);
 	dezalocareProdus(p4);
+	dezalocareProdus(p5);
+	dezalocareProdus(p6);
+	dezalocareProdus(p7);
 
 	return 0;
 }
