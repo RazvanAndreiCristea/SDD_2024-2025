@@ -1,17 +1,4 @@
-4
-
-100
-12.75
-Miere
-
-88
-39.99
-Tricou
-
-35
-50.0
-Stick
-
-150
-255.0
-Lego
+100,12.75,Miere poliflora
+88,39.99,Tricou H&M
+35,50.0,Stick 128GB
+150,255.0,Lego Star Wars

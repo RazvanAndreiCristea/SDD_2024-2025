@@ -60,16 +60,21 @@ Produs creareProdus(const int cod, const float pret, const char* denumire)
 
 Produs citireProdusDinFisier(FILE* f)
 {
+	char linie[256];
 	Produs produs = initializareProdus();
 
-	fscanf(f, "%d", &produs.cod);
-	fscanf(f, "%f", &produs.pret);
+	if (fgets(linie, sizeof(linie), f)) // citim linia complet din fisier ca string
+	{
+		char* token = strtok(linie, ",");
+		produs.cod = atoi(token);
 
-	char buffer[100];
+		token = strtok(NULL, ",");
+		produs.pret = (float)atof(token);
 
-	fscanf(f, "%s", buffer);
-	produs.denumire = (char*)malloc((1 + strlen(buffer) * sizeof(char)));
-	strcpy(produs.denumire, buffer);
+		token = strtok(NULL, ",");
+		produs.denumire = (char*)malloc((1 + strlen(token) * sizeof(char)));
+		strcpy(produs.denumire, token);
+	}
 
 	return produs;
 }
@@ -450,13 +455,14 @@ ListaSimpla inserareNodOriunde(ListaSimpla lista, const Produs info, const int i
 ListaSimpla citireListaDinFisier(const char* fisier)
 {
 	ListaSimpla lista = initializareListaSimpla();
-
 	FILE* f = fopen(fisier, "r");
 
-	int nrProduse = 0;
-	fscanf(f, "%d", &nrProduse);
+	if (f == NULL)
+	{
+		return lista;
+	}
 
-	for (int i = 0; i < nrProduse; i++)
+	while(!feof(f))
 	{
 		Produs p = citireProdusDinFisier(f);
 		lista = inserareNodLaFinal(lista, p);
@@ -464,8 +470,35 @@ ListaSimpla citireListaDinFisier(const char* fisier)
 	}
 
 	fclose(f);
-
 	return lista;
+}
+
+void inversareListaSimpla(ListaSimpla* lista)
+{
+	if (isEmptyList(*lista))
+	{
+		return;
+	}
+
+	if (lista->first == lista->last) // daca lista are doar un singur nod nu o inversam
+	{
+		return;
+	}
+
+	NodSimplu* prev = NULL;
+	NodSimplu* next = NULL;
+	NodSimplu* current = lista->first;
+
+	while (current != NULL)
+	{
+		next = current->next;
+		current->next = prev;
+		prev = current;
+		current = next;
+	}
+
+	lista->last = lista->first;
+	lista->first = prev;
 }
 
 int main()
@@ -513,6 +546,11 @@ int main()
 	lista = inserareNodOriunde(lista, p5, 3);
 	afisareListaSimpla(lista);
 
+	printf("======================================= Dupa inversarea listei =======================================\n\n");
+
+	inversareListaSimpla(&lista);
+	afisareListaSimpla(lista);
+
 	printf("======================================= Dupa stergerea la inceput =======================================\n\n");
 
 	lista = stergereNodLaInceput(lista);
@@ -527,7 +565,6 @@ int main()
 
 	lista = stergereNodInainteDeLast(lista);
 	afisareListaSimpla(lista);
-
 	dezalocareListaSimpla(&lista);
 
 	dezalocareProdus(p1);
@@ -537,6 +574,7 @@ int main()
 	dezalocareProdus(p5);
 	dezalocareProdus(p6);
 	dezalocareProdus(p7);
+	dezalocareProdus(p8);
 
 	return 0;
 }
