@@ -187,6 +187,31 @@ ListaSimplaCirculara inserareNod(ListaSimplaCirculara lista, const Produs info)
 	return lista;
 }
 
+ListaSimplaCirculara stergereNod(ListaSimplaCirculara lista)
+{
+	if (isEmptyList(lista))
+	{
+		return lista;
+	}
+
+	if (lista.first == lista.last)
+	{
+		dezalocareNodSimplu(lista.first);
+		lista.first = lista.last = NULL;
+		lista.nrNoduri = 0;
+
+		return lista;
+	}
+
+	NodSimplu* nodDeSters = lista.first;
+	lista.first = lista.first->next;
+	lista.last->next = lista.first;
+	dezalocareNodSimplu(nodDeSters);
+	lista.nrNoduri--;
+
+	return lista;
+}
+
 ListaSimplaCirculara citireListaDinFisier(const char* denumireFisier)
 {
 	ListaSimplaCirculara lista = initializareListaSimplaCirculara();
@@ -225,16 +250,37 @@ void afisareListaSimplaCirculara(ListaSimplaCirculara lista)
 	} while (current != lista.first);
 }
 
-/* Tema
-* functia de dezalocare
-* functia de stergere nod
-* plus impletare lista dubla circulara
-*/
+void dezalocareListaSimplaCirculara(ListaSimplaCirculara* lista)
+{
+	if (isEmptyList(*lista))
+	{
+		return;
+	}
+
+	lista->last->next = NULL; // rupem circularitatea (echivalent cu a transforma lista circulara intr-una linara)
+	NodSimplu* nodDeSters = NULL;
+
+	while (lista->first != NULL)
+	{
+		nodDeSters = lista->first;
+		lista->first = lista->first->next;
+		dezalocareNodSimplu(nodDeSters);
+		lista->nrNoduri--;
+	}
+
+	lista->last = NULL;
+}
 
 int main()
 {
 	ListaSimplaCirculara lista = citireListaDinFisier("produse.txt");
 	afisareListaSimplaCirculara(lista);
+
+	printf("======================================== Dupa eliminarea unui nod ========================================\n\n");
+
+	lista = stergereNod(lista);
+	afisareListaSimplaCirculara(lista);
+	dezalocareListaSimplaCirculara(&lista);
 
 	return 0;
 }
