@@ -155,13 +155,6 @@ void afisareNodDublu(NodDublu* nod)
 	afisareProdus(nod->info);
 }
 
-/* Functii pentru structura ListaDubla
-* inserare la inceput (inainte de first)
-* inserare la sfarsit (dupa last, complexitate O(1)) -> tema
-* stergere la inceput (stergem first, complexitate O(1)) -> tema
-* stergere la sfarsit (stergem last, complexitate O(1)) -> tema
-*/
-
 ListaDubla initializareListaDubla()
 {
 	ListaDubla lista = { .first = NULL, .last = NULL, .nrNoduri = 0 };
@@ -195,6 +188,84 @@ ListaDubla inserareNodLaInceput(ListaDubla lista, const Produs info)
 	noulNod->next = lista.first;
 	lista.first = noulNod;
 	lista.nrNoduri++;
+
+	return lista;
+}
+
+ListaDubla inserareNodLaSfarsit(ListaDubla lista, const Produs info)
+{
+	NodDublu* noulNod = creareNodDublu(info, NULL, NULL);
+
+	if (noulNod == NULL)
+	{
+		return lista;
+	}
+
+	if (isEmptyList(lista))
+	{
+		lista.first = noulNod;
+		lista.last = noulNod;
+		lista.nrNoduri = 1;
+
+		return lista;
+	}
+
+	lista.last->next = noulNod;
+	noulNod->prev = lista.last;
+	lista.last = noulNod;
+	lista.nrNoduri++;
+
+	return lista;
+}
+
+ListaDubla stergereNodLaInceput(ListaDubla lista)
+{
+	if (isEmptyList(lista))
+	{
+		return lista;
+	}
+
+	if (lista.first == lista.last)
+	{
+		dezalocareNodDublu(lista.first);
+		lista.first = NULL;
+		lista.last = NULL;
+		lista.nrNoduri = 0;
+
+		return lista;
+	}
+
+	NodDublu* nodDeSters = lista.first;
+	lista.first = lista.first->next;
+	lista.first->prev = NULL;
+	dezalocareNodDublu(nodDeSters);
+	lista.nrNoduri--;
+
+	return lista;
+}
+
+ListaDubla stergereNodLaSfarsit(ListaDubla lista)
+{
+	if (isEmptyList(lista))
+	{
+		return lista;
+	}
+
+	if (lista.first == lista.last)
+	{
+		dezalocareNodDublu(lista.first);
+		lista.first = NULL;
+		lista.last = NULL;
+		lista.nrNoduri = 0;
+
+		return lista;
+	}
+
+	NodDublu* nodDeSters = lista.last;
+	lista.last = lista.last->prev;
+	lista.last->next = NULL;
+	dezalocareNodDublu(nodDeSters);
+	lista.nrNoduri--;
 
 	return lista;
 }
@@ -282,7 +353,37 @@ int main()
 	printf("================================================== Dupa afisarea invers ==================================================\n\n");
 	afisareListaDublaInvers(lista);
 
+	Produs p1 = creareProdus(888, 100, "Incaltaminte sport");
+	Produs p2 = creareProdus(2000, 55.65, "Camasa albastra");
+
+	lista = inserareNodLaSfarsit(lista, p1);
+	lista = inserareNodLaInceput(lista, p2);
+
+	printf("\n\n================================================== Dupa inserari ==================================================\n\n");
+
+	afisareListaDubla(lista);
+	printf("\n\n================================================== Dupa afisarea invers ==================================================\n\n");
+	afisareListaDublaInvers(lista);
+
+	printf("\n\n================================================== Dupa stergerea la inceput ==================================================\n\n");
+
+	lista = stergereNodLaInceput(lista);
+
+	afisareListaDubla(lista);
+	printf("================================================== Dupa afisarea invers ==================================================\n\n");
+	afisareListaDublaInvers(lista);
+
+	printf("\n\n================================================== Dupa stergerea la sfarsit ==================================================\n\n");
+
+	lista = stergereNodLaSfarsit(lista);
+
+	afisareListaDubla(lista);
+	printf("================================================== Dupa afisarea invers ==================================================\n\n");
+	afisareListaDublaInvers(lista);
+
 	dezalocareListaDubla(&lista);
+	dezalocareProdus(p1);
+	dezalocareProdus(p2);
 
 	return 0;
 }
