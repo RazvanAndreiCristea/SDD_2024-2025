@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,6 +29,33 @@ struct Stiva
 	int dimensiune;
 	NodStiva* varf;
 };
+
+char* trim(char* sir)
+{
+	if (sir == NULL)
+	{
+		return sir;
+	}
+
+	char* start = sir;
+
+	while (isspace(*start))
+	{
+		start++;
+	}
+
+	char* final = sir + strlen(sir) - 1;
+
+	while (final > sir && isspace(*final))
+	{
+		final--;
+	}
+
+	sir = start;
+	*(final + 1) = '\0';
+
+	return sir;
+}
 
 /* Functii pentru structura Produs */
 
@@ -64,13 +92,13 @@ Produs citireProdusDinFisier(FILE* f)
 
 	if (fgets(linie, sizeof(linie), f)) // citim linia complet din fisier ca string
 	{
-		char* token = strtok(linie, ",");
+		char* token = trim(strtok(linie, ","));
 		produs.cod = atoi(token);
 
-		token = strtok(NULL, ",");
+		token = trim(strtok(NULL, ","));
 		produs.pret = (float)atof(token);
 
-		token = strtok(NULL, ",");
+		token = trim(strtok(NULL, ","));
 		produs.denumire = (char*)malloc((1 + strlen(token) * sizeof(char)));
 		strcpy(produs.denumire, token);
 	}

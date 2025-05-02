@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +31,33 @@ struct ListaSimplaCirculara
 	NodSimplu* last;
 };
 
+char* trim(char* sir)
+{
+	if (sir == NULL)
+	{
+		return sir;
+	}
+
+	char* start = sir;
+
+	while (isspace(*start))
+	{
+		start++;
+	}
+
+	char* final = sir + strlen(sir) - 1;
+
+	while (final > sir && isspace(*final))
+	{
+		final--;
+	}
+
+	sir = start;
+	*(final + 1) = '\0';
+
+	return sir;
+}
+
 /* Functii pentru structura Produs */
 
 Produs initializareProdus()
@@ -38,45 +66,25 @@ Produs initializareProdus()
 	return produs;
 }
 
-Produs creareProdus(const int cod, const float pret, const char* denumire)
+Produs citireProdusDinFisier(FILE* f)
 {
-	Produs produs;
+	char linie[256];
+	Produs produs = initializareProdus();
 
-	produs.cod = cod;
-	produs.pret = pret;
+	if (fgets(linie, sizeof(linie), f))
+	{
+		char* token = trim(strtok(linie, ","));
+		produs.cod = atoi(token);
 
-	if (denumire != NULL)
-	{
-		produs.denumire = (char*)malloc((1 + strlen(denumire)) * sizeof(char));
-		strcpy(produs.denumire, denumire);
-	}
-	else
-	{
-		produs.denumire = NULL;
+		token = trim(strtok(NULL, ","));
+		produs.pret = (float)atof(token);
+
+		token = trim(strtok(NULL, ","));
+		produs.denumire = (char*)malloc((1 + strlen(token) * sizeof(char)));
+		strcpy(produs.denumire, token);
 	}
 
 	return produs;
-}
-
-Produs citireProdusDinFisier(FILE* file)
-{
-	char linie[256];
-	Produs p = initializareProdus();
-
-	if (fgets(linie, sizeof(linie), file))
-	{
-		char* token = strtok(linie, ",");
-		p.cod = atoi(token);
-
-		token = strtok(NULL, ",");
-		p.pret = (float)atof(token);
-
-		token = strtok(NULL, ",");
-		p.denumire = (char*)malloc((1 + strlen(token) * sizeof(char)));
-		strcpy(p.denumire, token);
-	}
-
-	return p;
 }
 
 Produs copiazaProdus(const Produs produs)
