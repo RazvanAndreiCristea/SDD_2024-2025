@@ -83,7 +83,7 @@ Produs citireProdusDinFisier(FILE* f)
 	char linie[256];
 	Produs produs = initializareProdus();
 
-	if (fgets(linie, sizeof(linie), f)) // citim linia complet din fisier ca string
+	if (fgets(linie, sizeof(linie), f))
 	{
 		char* token = trim(strtok(linie, ","));
 		produs.cod = atoi(token);
@@ -196,6 +196,17 @@ void minHeapify(Heap* heap, const int pozitieStart)
 	}
 }
 
+void minHeapifyUp(Heap* heap, const int pozitieStart)
+{
+	int pozParinte = getPozitieParinte(pozitieStart);
+
+	if (heap->elemente[pozitieStart].pret < heap->elemente[pozParinte].pret)
+	{
+		interschimbare(heap->elemente, pozParinte, pozitieStart);
+		minHeapifyUp(heap, pozParinte);
+	}
+}
+
 Heap citireHeapDinFisier(const char* denumireFisier)
 {
 	Heap heap = initializareHeap();
@@ -234,6 +245,35 @@ Heap citireHeapDinFisier(const char* denumireFisier)
 	{
 		minHeapify(&heap, i);
 	}
+
+	return heap;
+}
+
+Heap inserareElement(Heap heap, const Produs produs)
+{
+	if (isEmptyHeap(heap))
+	{
+		heap.elemente = (Produs*)malloc(sizeof(Produs));
+		heap.elemente[0] = copiazaProdus(produs);
+		heap.dimensiune = 1;
+
+		return heap;
+	}
+
+	Produs* aux = heap.elemente;
+	int dimensiune = heap.dimensiune;
+
+	heap.elemente = (Produs*)malloc((dimensiune + 1) * sizeof(Produs));
+
+	for (int i = 0; i < dimensiune; i++)
+	{
+		heap.elemente[i] = aux[i];
+	}
+
+	heap.elemente[dimensiune] = copiazaProdus(produs);
+	free(aux);
+	heap.dimensiune++;
+	minHeapifyUp(&heap, heap.dimensiune - 1); // refacem doar in ascendenta nodului structura de heap fara a reface intreaga structura de date
 
 	return heap;
 }
@@ -284,12 +324,6 @@ void dezalocareHeap(Heap* heap)
 	heap->dimensiune = 0;
 }
 
-/*
-* Tema Heap
-* sa se scrie functia care filtreaza vectorul astfel incat sa se obtina un max heap (maxHeapify)
-* sa se scrie o functie care insereaza un element in heap si ii pastreaza structura interna de heap
-*/
-
 int main()
 {
 	Heap heap = citireHeapDinFisier("produse.txt");
@@ -297,13 +331,21 @@ int main()
 	afisareHeap(heap);
 
 	printf("========================================== Extragerea produsului cu pretul minim ==========================================\n\n");
+	
 	Produs* produsMinim = extragereProdusCuPretMinim(&heap);
 	afisareProdus(*produsMinim);
+	dezalocareProdus(*produsMinim); // trebuie facuta aceasta dezalocare inainte de inserarea unui element nou, altfel va genera un comportament nedefinit
 
 	printf("========================================== Dupa extragerea produsului cu pret minim ==========================================\n\n");
 	afisareHeap(heap);
 
-	dezalocareProdus(*produsMinim);
+	printf("========================================== Dupa inserarea unui element in heap ==========================================\n\n");
+	
+	Produs produsNou = creareProdus(9, 10.5f, "Rigla");
+	heap = inserareElement(heap, produsNou);
+	afisareHeap(heap);
+
+	dezalocareProdus(produsNou);
 	dezalocareHeap(&heap);
 
 	return 0;
